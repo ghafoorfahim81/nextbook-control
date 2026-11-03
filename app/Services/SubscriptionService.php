@@ -133,8 +133,9 @@ class SubscriptionService
      * should always be explainable.
      *
      * @param  array<string, mixed>  $overrides  max_users, max_branches, max_storage_mb, max_monthly_documents, modules
+     * @param  bool  $replace  Treat $overrides as the whole set: a limit not in it goes back to the package's
      */
-    public function override(Subscription $subscription, array $overrides, string $reason): Subscription
+    public function override(Subscription $subscription, array $overrides, string $reason, bool $replace = false): Subscription
     {
         if (trim($reason) === '') {
             throw new ControlException(__('control.reason_required'));
@@ -143,9 +144,9 @@ class SubscriptionService
         $allowed = ['max_users', 'max_branches', 'max_storage_mb', 'max_monthly_documents', 'modules'];
         $overrides = array_intersect_key($overrides, array_flip($allowed));
 
-        return DB::transaction(function () use ($subscription, $overrides, $reason) {
+        return DB::transaction(function () use ($subscription, $overrides, $reason, $replace) {
             $before = $subscription->overrides ?? [];
-            $after = array_merge($before, $overrides);
+            $after = $replace ? $overrides : array_merge($before, $overrides);
 
             $subscription->forceFill([
                 'overrides' => $after ?: null,
@@ -284,6 +285,16 @@ class SubscriptionService
             Audit::record('payment.recorded', $payment, null, $payment->only(['amount', 'method', 'reference']));
 
             return $payment;
+        });
+    }
+
+    /** Removes a payment recorded by mistake. The invoice is the record; the audit trail keeps what was removed. */
+    public function removePayment(Payment $payment): void
+    {
+        DB::transaction(function () use ($payment) {
+            $before = $payment->only(['invoice_id', 'amount', 'paid_on', 'method', 'reference']);
+            $payment->delete();
+            Audit::record('payment.removed', $payment, $before, null, $payment->customer_id);
         });
     }
 

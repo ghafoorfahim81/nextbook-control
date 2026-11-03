@@ -21,5 +21,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->redirectUsersTo(fn () => route('dashboard'));
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        // A rule of the control center said no (an overpayment, a void invoice,
+        // no price): tell the staff member and stay on the page. The API answers
+        // in JSON instead.
+        $exceptions->render(function (\App\Exceptions\ControlException $e, \Illuminate\Http\Request $request) {
+            return $request->expectsJson() && ! $request->header('X-Inertia')
+                ? response()->json(['message' => $e->getMessage()], 422)
+                : back()->with('error', $e->getMessage());
+        });
     })->create();

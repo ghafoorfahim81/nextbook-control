@@ -1,4 +1,7 @@
+import manage from './fa.manage'
+
 export default {
+    ...manage,
     nav: {
         dashboard: 'داشبورد',
         customers: 'مشتریان',

@@ -3,8 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\Invoice;
+use App\Models\Package;
 use App\Services\Audit;
 use App\Support\BusinessTypes;
+use App\Support\ErpModules;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
@@ -64,13 +67,47 @@ class CustomerController extends Controller
         return redirect()->route('customers.show', $customer)->with('success', __('control.saved'));
     }
 
-    public function show(Customer $customer)
+    public function show(Request $request, Customer $customer)
     {
         Gate::authorize('customers.view');
 
         $customer->load(['subscription.package', 'instance', 'contacts']);
 
+        $invoices = Invoice::query()->with('payments')->where('customer_id', $customer->id)
+            ->orderByDesc('issued_on')->orderByDesc('number')->get()
+            ->map(fn (Invoice $invoice) => [
+                'id' => $invoice->id,
+                'number' => $invoice->number,
+                'issued_on' => $invoice->issued_on->toDateString(),
+                'due_on' => $invoice->due_on?->toDateString(),
+                'period' => $invoice->period_from && $invoice->period_to ? $invoice->period_from->toDateString().' → '.$invoice->period_to->toDateString() : null,
+                'amount' => (float) $invoice->amount,
+                'discount' => (float) $invoice->discount,
+                'currency' => $invoice->currency,
+                'description' => $invoice->description,
+                'state' => $invoice->paymentState(),
+                'paid' => (float) $invoice->paidAmount(),
+                'balance' => (float) $invoice->balance(),
+                'payments' => $invoice->payments->map(fn ($payment) => [
+                    'id' => $payment->id,
+                    'amount' => (float) $payment->amount,
+                    'paid_on' => $payment->paid_on->toDateString(),
+                    'method' => $payment->method,
+                    'reference' => $payment->reference,
+                ])->values(),
+            ]);
+
         return inertia('Customers/Show', [
+            // Shown once, right after it was made; the token is never stored in the clear.
+            'issuedToken' => $request->session()->get('issued_token'),
+            'packages' => Package::query()->where('is_active', true)->orderBy('sort')->orderBy('name')->get()
+                ->map(fn (Package $package) => ['id' => $package->id, 'name' => $package->name, 'modules' => $package->modules, 'price' => $package->priceOn(now(), $customer->base_currency)?->amount !== null ? (float) $package->priceOn(now(), $customer->base_currency)->amount : null]),
+            'erpModules' => ErpModules::AVAILABLE,
+            'invoices' => $invoices,
+            'changes' => $customer->subscription
+                ? $customer->subscription->changes()->latest('created_at')->limit(10)->get(['type', 'reason', 'ends_on_before', 'ends_on_after', 'created_at'])
+                : [],
+            'usage' => $customer->usageSnapshots()->latest('taken_on')->first(['taken_on', 'users', 'branches', 'storage_mb', 'documents_this_month']),
             'customer' => $customer->only([
                 'id', 'name_en', 'name_fa', 'name_ps', 'business_type', 'province', 'city', 'license_no',
                 'base_currency', 'calendar_type', 'locale', 'status', 'notes',
@@ -84,8 +121,13 @@ class CustomerController extends Controller
                 'days_left' => $customer->subscription->daysLeft(),
                 'block_reason' => $customer->subscription->block_reason,
                 'limits' => $customer->subscription->limits(),
+                'package_limits' => $customer->subscription->package->only(['modules', 'max_users', 'max_branches', 'max_storage_mb', 'max_monthly_documents']),
+                'has_overrides' => ! empty($customer->subscription->overrides),
+                'license_version' => $customer->subscription->license_version,
             ] : null,
-            'instance' => $customer->instance?->only(['erp_company_id', 'base_url', 'erp_version', 'last_license_pull_at', 'last_usage_at']),
+            'instance' => $customer->instance
+                ? $customer->instance->only(['erp_company_id', 'base_url', 'erp_version', 'last_license_pull_at', 'last_usage_at']) + ['has_token' => $customer->instance->api_token_hash !== null]
+                : null,
             'contacts' => $customer->contacts,
         ]);
     }

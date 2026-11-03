@@ -13,6 +13,7 @@ const can = (ability) => user.value?.abilities?.includes(ability)
 const nav = computed(() => [
     { key: 'dashboard', href: '/dashboard', ability: 'reports.view' },
     { key: 'customers', href: '/customers', ability: 'customers.view' },
+    { key: 'packages', href: '/packages', ability: 'packages.view' },
 ].filter((item) => can(item.ability)))
 
 const active = (href) => page.url === href || page.url.startsWith(`${href}/`) || page.url.startsWith(`${href}?`)

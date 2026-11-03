@@ -1,4 +1,7 @@
+import manage from './en.manage'
+
 export default {
+    ...manage,
     nav: {
         dashboard: 'Dashboard',
         customers: 'Customers',
