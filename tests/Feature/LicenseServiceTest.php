@@ -109,6 +109,29 @@ class LicenseServiceTest extends TestCase
         $this->assertNotSame(LicenseService::canonical($payload), LicenseService::canonical(['b' => 1, 'a' => ['y' => 2, 'x' => 3], 'modules' => ['a', 'z']]), 'the order of a list does matter');
     }
 
+    /**
+     * The same vector is checked in the NextBook repo (tests/Fixtures/licence-golden.json).
+     * Ed25519 is deterministic, so both sides agreeing on these exact bytes
+     * and this exact signature is what keeps the two systems compatible.
+     */
+    public function test_the_golden_vector_signs_and_verifies_to_the_same_bytes_the_erp_checks(): void
+    {
+        $vector = json_decode(file_get_contents(base_path('tests/fixtures/licence-golden.json')), true);
+        $pair = sodium_crypto_sign_seed_keypair(hash('sha256', 'nextbook-golden-vector', true));
+
+        $this->assertSame($vector['public_key'], base64_encode(sodium_crypto_sign_publickey($pair)));
+        $this->assertSame($vector['canonical'], LicenseService::canonical($vector['payload']));
+
+        config(['control.license.private_key' => base64_encode(sodium_crypto_sign_secretkey($pair))]);
+        $this->assertSame($vector['signature'], app(LicenseService::class)->sign($vector['payload']));
+        $this->assertTrue(LicenseService::verify($vector['payload'], $vector['signature'], $vector['public_key']));
+    }
+
+    public function test_the_licence_names_the_package(): void
+    {
+        $this->assertSame('Starter', app(LicenseService::class)->payload($this->customerOnPackage())['package']);
+    }
+
     public function test_a_customer_without_a_subscription_gets_no_licence(): void
     {
         $this->expectException(ControlException::class);

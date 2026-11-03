@@ -38,6 +38,7 @@ class LicenseService
             'customer_status' => $customer->status,
             'state' => $subscription->state(),
             'kind' => $subscription->kind,
+            'package' => $subscription->package->name,
             'starts_on' => $subscription->starts_on->toDateString(),
             'ends_on' => $subscription->ends_on->toDateString(),
             // `state` and `writes_allowed` are true as of `issued_at` only; an

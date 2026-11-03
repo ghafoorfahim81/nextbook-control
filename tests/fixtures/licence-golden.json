@@ -1,0 +1,30 @@
+{
+    "public_key": "C/QUrufk6WeDu3ITTVfr8yEKJ/I4QgMtprYUykfxUYg=",
+    "payload": {
+        "v": 1,
+        "customer_id": "01M6DTM02SCYWQ21QAJD5NYKH0",
+        "erp_company_id": "01M6DTM02SCYWQ21QAJD5NYKHF",
+        "license_version": 3,
+        "issued_at": "2026-11-03T08:00:00Z",
+        "customer_status": "active",
+        "state": "active",
+        "kind": "paid",
+        "package": "Starter",
+        "starts_on": "2026-11-01",
+        "ends_on": "2027-11-01",
+        "blocked": false,
+        "writes_allowed": true,
+        "block_reason": null,
+        "modules": [
+            "expenses",
+            "hr"
+        ],
+        "max_users": 3,
+        "max_branches": null,
+        "max_storage_mb": null,
+        "max_monthly_documents": null,
+        "name_fa": "کابل ټریډرز — تست"
+    },
+    "signature": "LFsk7zkNsJmhvfYYuu2PcHXVyPIfnR7djxqFOKIGpapRo1d0z4g+22N1WUdrWW6wbnpWdu0t6eBCq+Ojj0eNAQ==",
+    "canonical": "{\"block_reason\":null,\"blocked\":false,\"customer_id\":\"01M6DTM02SCYWQ21QAJD5NYKH0\",\"customer_status\":\"active\",\"ends_on\":\"2027-11-01\",\"erp_company_id\":\"01M6DTM02SCYWQ21QAJD5NYKHF\",\"issued_at\":\"2026-11-03T08:00:00Z\",\"kind\":\"paid\",\"license_version\":3,\"max_branches\":null,\"max_monthly_documents\":null,\"max_storage_mb\":null,\"max_users\":3,\"modules\":[\"expenses\",\"hr\"],\"name_fa\":\"کابل ټریډرز — تست\",\"package\":\"Starter\",\"starts_on\":\"2026-11-01\",\"state\":\"active\",\"v\":1,\"writes_allowed\":true}"
+}
