@@ -36,7 +36,8 @@ const assign = useForm({
     ends_on: sub.value?.ends_on ?? '',
     notes: '',
 })
-const renew = useForm({ months: null, invoice: false })
+// A renewal comes with its invoice unless the owner chooses a free period.
+const renew = useForm({ months: null, invoice: true })
 const block = useForm({ reason: '' })
 const limits = useForm({
     max_users: sub.value?.limits.max_users ?? null,
@@ -71,7 +72,7 @@ const rows = computed(() => (sub.value ? [
                 <button v-if="!sub" :class="btn" @click="open = 'trial'">{{ t('sub.start_trial') }}</button>
                 <button :class="btn" @click="open = 'assign'">{{ sub ? t('sub.change') : t('sub.assign') }}</button>
             </template>
-            <button v-if="sub && canAny('subscriptions.assign', 'billing.manage')" :class="btn" @click="open = 'renew'">{{ t('sub.renew') }}</button>
+            <button v-if="sub && canAny('billing.manage', 'subscriptions.renew_free')" :class="btn" @click="open = 'renew'">{{ t('sub.renew') }}</button>
             <template v-if="sub && can('subscriptions.block')">
                 <button v-if="sub.state !== 'blocked'" :class="[btn, 'text-red-700']" @click="open = 'block'">{{ t('sub.block') }}</button>
                 <button v-else :class="btn" @click="unblock">{{ t('sub.unblock') }}</button>
@@ -150,7 +151,8 @@ const rows = computed(() => (sub.value ? [
         <Modal v-if="open === 'renew'" :title="t('sub.renew')" @close="close">
             <form class="space-y-3" @submit.prevent="send(renew, 'renew')">
                 <label class="block text-sm"><span class="mb-1 block text-slate-600">{{ t('sub.renew_months') }}</span><input v-model="renew.months" type="number" min="1" max="60" :class="input" dir="ltr" /></label>
-                <label v-if="can('billing.manage')" class="flex items-center gap-2 text-sm"><input v-model="renew.invoice" type="checkbox" /> {{ t('sub.renew_invoice') }}</label>
+                <label class="flex items-center gap-2 text-sm"><input v-model="renew.invoice" type="checkbox" :disabled="!can('subscriptions.renew_free')" /> {{ t('sub.renew_invoice') }}</label>
+                <p v-if="!can('subscriptions.renew_free')" class="text-xs text-slate-500">{{ t('sub.renew_invoice_required') }}</p>
                 <button type="submit" :disabled="renew.processing" :class="primary">{{ t('sub.renew') }}</button>
             </form>
         </Modal>

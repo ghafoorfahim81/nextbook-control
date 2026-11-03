@@ -54,6 +54,7 @@ export default {
         renew: 'Renew',
         renew_months: 'Months (empty = the package period)',
         renew_invoice: 'Also issue an invoice for the new period',
+        renew_invoice_required: 'A renewal comes with its invoice. Only the owner can extend without one.',
         block: 'Block',
         unblock: 'Unblock',
         block_reason: 'Reason (the customer sees it)',

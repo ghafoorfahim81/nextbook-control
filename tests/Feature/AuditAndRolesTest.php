@@ -90,6 +90,12 @@ class AuditAndRolesTest extends TestCase
             $this->assertFalse($can('viewer', $ability), "viewer must not have {$ability}");
         }
 
+        // A free period, a renewal with no invoice, is the owner's alone.
+        $this->assertTrue($can('owner', 'subscriptions.renew_free'));
+        foreach (['sales', 'finance', 'support', 'viewer'] as $role) {
+            $this->assertFalse($can($role, 'subscriptions.renew_free'), "{$role} must not extend for free");
+        }
+
         // Only the owner runs staff and reads the audit trail.
         $this->assertTrue($can('owner', 'staff.manage'));
         $this->assertTrue($can('owner', 'audit.view'));

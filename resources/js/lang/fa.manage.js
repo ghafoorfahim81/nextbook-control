@@ -54,6 +54,7 @@ export default {
         renew: 'تمدید',
         renew_months: 'ماه (خالی = مدت بسته)',
         renew_invoice: 'برای دورهٔ جدید فاکتور هم صادر شود',
+        renew_invoice_required: 'تمدید همراه فاکتورش است. فقط مالک می‌تواند بدون فاکتور تمدید کند.',
         block: 'بلاک',
         unblock: 'رفع بلاک',
         block_reason: 'دلیل (به مشتری نشان داده می‌شود)',

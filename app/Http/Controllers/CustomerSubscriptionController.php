@@ -66,17 +66,19 @@ class CustomerSubscriptionController extends Controller
         return back()->with('success', __('control.saved'));
     }
 
-    /** Extends the subscription; finance renews once paid, sales when it sells. */
+    /**
+     * Extends the subscription. A renewal is money, so it comes with its
+     * invoice: whoever may bill (finance, the owner) renews and the invoice is
+     * made with it. Extending with no invoice at all, a free period, is the
+     * owner's alone.
+     */
     public function renew(Request $request, Customer $customer)
     {
-        abort_unless(Gate::any(['subscriptions.assign', 'billing.manage']), 403);
-
         $data = $request->validate(['months' => ['nullable', 'integer', 'min:1', 'max:60'], 'invoice' => ['boolean'], 'currency' => ['nullable', 'string', 'size:3']]);
-        $subscription = $this->subscriptionOf($customer);
 
-        if (! empty($data['invoice'])) {
-            Gate::authorize('billing.manage');
-        }
+        Gate::authorize(! empty($data['invoice']) ? 'billing.manage' : 'subscriptions.renew_free');
+
+        $subscription = $this->subscriptionOf($customer);
 
         $previousEnd = $subscription->ends_on->isFuture() ? $subscription->ends_on->copy() : now()->startOfDay();
         $months = $data['months'] ?? null;

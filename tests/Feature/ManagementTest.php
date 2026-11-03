@@ -134,21 +134,54 @@ class ManagementTest extends TestCase
         $this->assertSame(0, Subscription::query()->count());
     }
 
-    public function test_who_may_renew_and_who_may_bill_with_it(): void
+    public function test_a_renewal_comes_with_its_invoice_and_only_the_owner_may_extend_without_one(): void
     {
         $subscription = $this->subscribed('+10 days');
         $url = "/customers/{$subscription->customer_id}/subscription/renew";
+        $endsBefore = now()->addDays(10)->toDateString();
 
-        $this->actingAs($this->staff('support'))->post($url)->assertForbidden();
-        $this->actingAs($this->staff('viewer'))->post($url)->assertForbidden();
-
-        // Sales may renew, but not bill: asking for the invoice too is refused, and nothing is renewed.
-        $this->actingAs($this->staff('sales'))->post($url, ['invoice' => true])->assertForbidden();
-        $this->assertSame(now()->addDays(10)->toDateString(), $subscription->fresh()->ends_on->toDateString());
-
-        $this->actingAs($this->staff('sales'))->post($url)->assertRedirect()->assertSessionHasNoErrors();
-        $this->assertSame(now()->addDays(10)->addYear()->toDateString(), $subscription->fresh()->ends_on->toDateString());
+        // Nobody but finance and the owner may bill, and nobody but the owner may skip the invoice:
+        // so sales, support and a viewer cannot renew, whichever way they ask.
+        foreach (['sales', 'support', 'viewer'] as $role) {
+            $this->actingAs($this->staff($role))->post($url)->assertForbidden();
+            $this->actingAs($this->staff($role))->post($url, ['invoice' => true])->assertForbidden();
+            $this->actingAs($this->staff($role))->post($url, ['invoice' => false, 'months' => 12])->assertForbidden();
+        }
+        $this->assertSame($endsBefore, $subscription->fresh()->ends_on->toDateString(), 'a refused renewal changes nothing');
         $this->assertSame(0, Invoice::query()->count());
+
+        // Finance renews, with the invoice, and may not do it for free.
+        $this->actingAs($this->staff('finance'))->post($url)->assertForbidden();
+        $this->actingAs($this->staff('finance'))->post($url, ['invoice' => false])->assertForbidden();
+        $this->assertSame($endsBefore, $subscription->fresh()->ends_on->toDateString());
+        $this->actingAs($this->staff('finance'))->post($url, ['invoice' => true])->assertRedirect()->assertSessionHasNoErrors();
+        $this->assertSame(now()->addDays(10)->addYear()->toDateString(), $subscription->fresh()->ends_on->toDateString());
+        $this->assertSame(1, Invoice::query()->count());
+    }
+
+    public function test_the_owner_may_extend_a_subscription_with_no_invoice(): void
+    {
+        $subscription = $this->subscribed('+10 days');
+
+        $this->actingAs($this->staff('owner'))
+            ->post("/customers/{$subscription->customer_id}/subscription/renew", ['months' => 1])
+            ->assertRedirect()->assertSessionHasNoErrors();
+
+        $this->assertSame(now()->addDays(10)->addMonthNoOverflow()->toDateString(), $subscription->fresh()->ends_on->toDateString());
+        $this->assertSame(0, Invoice::query()->count(), 'a free period: no invoice');
+        $this->assertDatabaseHas('subscription_changes', ['type' => 'renewed', 'customer_id' => $subscription->customer_id]);
+    }
+
+    public function test_the_page_offers_the_renewal_only_to_those_who_may_make_it(): void
+    {
+        $subscription = $this->subscribed();
+
+        foreach (['sales' => false, 'support' => false, 'viewer' => false, 'finance' => true, 'owner' => true] as $role => $mayRenew) {
+            $abilities = $this->actingAs($this->staff($role))->get("/customers/{$subscription->customer_id}")
+                ->viewData('page')['props']['auth']['user']['abilities'];
+
+            $this->assertSame($mayRenew, in_array('billing.manage', $abilities, true) || in_array('subscriptions.renew_free', $abilities, true), $role);
+        }
     }
 
     public function test_finance_renews_with_an_invoice_for_the_new_period_pro_rata(): void

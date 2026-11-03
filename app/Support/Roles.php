@@ -16,6 +16,8 @@ class Roles
         'customers.view', 'customers.manage',
         'packages.view', 'packages.manage',
         'subscriptions.view', 'subscriptions.assign', 'subscriptions.block',
+        // Extending a subscription with no invoice behind it: a free month. Only the owner.
+        'subscriptions.renew_free',
         'billing.view', 'billing.manage',
         'support.impersonate',
         'reports.view', 'audit.view',
