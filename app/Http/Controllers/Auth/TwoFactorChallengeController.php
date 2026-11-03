@@ -13,9 +13,23 @@ use Illuminate\Validation\ValidationException;
 /** The second step of signing in: the code from the authenticator app, or a recovery code. */
 class TwoFactorChallengeController extends Controller
 {
+    /** Whether a password that was right a moment ago is still good for a code. */
+    private function pending(Request $request): bool
+    {
+        $session = $request->session();
+        $fresh = $session->has('two_factor.user_id')
+            && (now()->timestamp - (int) $session->get('two_factor.at', 0)) <= LoginController::CHALLENGE_MINUTES * 60;
+
+        if (! $fresh) {
+            $session->forget(['two_factor.user_id', 'two_factor.at']);
+        }
+
+        return $fresh;
+    }
+
     public function show(Request $request)
     {
-        if (! $request->session()->has('two_factor.user_id')) {
+        if (! $this->pending($request)) {
             return redirect()->route('login');
         }
 
@@ -24,9 +38,13 @@ class TwoFactorChallengeController extends Controller
 
     public function store(Request $request, TwoFactor $twoFactor)
     {
+        if (! $this->pending($request)) {
+            return redirect()->route('login');
+        }
+
         $user = User::query()->find($request->session()->get('two_factor.user_id'));
         if (! $user || ! $user->is_active) {
-            $request->session()->forget('two_factor.user_id');
+            $request->session()->forget(['two_factor.user_id', 'two_factor.at']);
 
             return redirect()->route('login');
         }
@@ -57,7 +75,7 @@ class TwoFactorChallengeController extends Controller
         }
 
         RateLimiter::clear($key);
-        $request->session()->forget('two_factor.user_id');
+        $request->session()->forget(['two_factor.user_id', 'two_factor.at']);
         Auth::login($user);
         $request->session()->regenerate();
 

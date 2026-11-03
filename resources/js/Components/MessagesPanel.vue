@@ -4,9 +4,13 @@ import { useAuth } from '../composables/useAuth'
 import { useDates } from '../composables/useDates'
 import { t } from '../i18n'
 
-defineProps({ messages: { type: Array, default: () => [] } })
+const props = defineProps({
+    customerId: String,
+    hasSubscription: Boolean,
+    messages: { type: Array, default: () => [] },
+})
 
-const { can } = useAuth()
+const { can, canAny } = useAuth()
 const { fdt } = useDates()
 
 const tone = {
@@ -16,11 +20,19 @@ const tone = {
     skipped: 'bg-slate-200 text-slate-600',
 }
 const retry = (m) => router.post(`/messages/${m.id}/retry`, {}, { preserveScroll: true })
+const sendNow = () => window.confirm(t('messages.send_now_confirm')) && router.post(`/customers/${props.customerId}/reminder`, {}, { preserveScroll: true })
 </script>
 
 <template>
     <section class="rounded-lg border border-slate-200 bg-white p-4">
-        <h2 class="mb-3 font-semibold">{{ t('messages.title') }}</h2>
+        <div class="mb-3 flex items-center">
+            <h2 class="me-auto font-semibold">{{ t('messages.title') }}</h2>
+            <button
+                v-if="hasSubscription && canAny('subscriptions.assign', 'billing.manage')"
+                class="rounded-md border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50"
+                @click="sendNow"
+            >{{ t('messages.send_now') }}</button>
+        </div>
         <p v-if="!messages.length" class="text-sm text-slate-500">{{ t('messages.none') }}</p>
 
         <ul class="divide-y text-sm">

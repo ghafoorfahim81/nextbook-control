@@ -3,10 +3,12 @@
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\TwoFactorChallengeController;
 use App\Http\Controllers\Auth\TwoFactorSetupController;
+use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AuditController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\MessageController;
+use App\Http\Controllers\ReminderController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\CustomerController;
@@ -34,7 +36,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/two-factor-setup', [TwoFactorSetupController::class, 'show'])->name('two-factor.setup');
     Route::post('/two-factor-setup', [TwoFactorSetupController::class, 'store']);
 
-    Route::middleware(['active_staff', 'two_factor'])->group(function () {
+    Route::middleware(['active_staff', 'two_factor', 'password_changed'])->group(function () {
+        // Their own password: open to everyone, and the only page a member who
+        // must change it can reach (RequirePasswordChange lets these through).
+        Route::get('/account/password', [AccountController::class, 'show'])->name('account.password');
+        Route::put('/account/password', [AccountController::class, 'update'])->middleware('throttle:6,1')->name('account.password.update');
+
         Route::get('/audit', [AuditController::class, 'index'])->name('audit.index');
         Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
         Route::get('/reports/revenue', [ReportController::class, 'revenue'])->name('reports.revenue');
@@ -64,6 +71,7 @@ Route::middleware('auth')->group(function () {
 
             Route::post('invoices', [BillingController::class, 'storeInvoice'])->name('invoices.store');
             Route::post('contacts', [ContactController::class, 'store'])->name('contacts.store');
+            Route::post('reminder', [ReminderController::class, 'store'])->middleware('throttle:6,1')->name('reminder.send');
         });
         Route::put('contacts/{contact}', [ContactController::class, 'update'])->name('contacts.update');
         Route::delete('contacts/{contact}', [ContactController::class, 'destroy'])->name('contacts.destroy');

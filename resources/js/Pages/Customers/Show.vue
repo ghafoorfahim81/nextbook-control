@@ -72,7 +72,7 @@ const rows = [
 
             <ContactsPanel :customer-id="customer.id" :contacts="contacts" />
 
-            <MessagesPanel :messages="messages" />
+            <MessagesPanel :customer-id="customer.id" :has-subscription="!!subscription" :messages="messages" />
 
             <div class="lg:col-span-2">
                 <InvoicesPanel :customer-id="customer.id" :currency="customer.base_currency" :has-subscription="!!subscription" :invoices="invoices" />

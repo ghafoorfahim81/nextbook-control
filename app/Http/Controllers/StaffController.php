@@ -66,7 +66,8 @@ class StaffController extends Controller
         $password = Str::password(16, symbols: false);
 
         $user = new User(['name' => $data['name'], 'email' => $data['email'], 'password' => $password]);
-        $user->forceFill(['role' => $data['role'], 'is_active' => true])->save();
+        // The password was made here and has been seen: its owner replaces it first.
+        $user->forceFill(['role' => $data['role'], 'is_active' => true, 'must_change_password' => true])->save();
         Audit::record('staff.created', $user, null, $user->only(['name', 'email', 'role']));
 
         return redirect()->route('staff.index')->with(['generated_password' => $password, 'generated_for' => $user->email]);
@@ -118,7 +119,7 @@ class StaffController extends Controller
         Gate::authorize('staff.manage');
 
         $password = Str::password(16, symbols: false);
-        $user->forceFill(['password' => $password])->save();
+        $user->forceFill(['password' => $password, 'must_change_password' => true])->save();
         $this->endSessions($user);
         Audit::record('staff.password_reset', $user);
 

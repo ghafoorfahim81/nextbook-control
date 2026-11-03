@@ -39,7 +39,7 @@ const logout = () => router.post('/logout')
                 </Link>
             </nav>
             <div class="border-t border-slate-800 px-5 py-4 text-sm">
-                <div class="font-semibold text-white">{{ user?.name }}</div>
+                <Link href="/account/password" class="block font-semibold text-white hover:underline">{{ user?.name }}</Link>
                 <div class="mb-2 text-xs text-slate-400">{{ user?.role }}</div>
                 <button class="text-xs text-violet-300 hover:text-white" @click="logout">{{ t('nav.logout') }}</button>
             </div>

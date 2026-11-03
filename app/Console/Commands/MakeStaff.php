@@ -48,6 +48,8 @@ class MakeStaff extends Command
         $user->name = $this->option('name') ?: ($user->name ?: Str::before($user->email, '@'));
         if ($password) {
             $user->password = $password;
+            // Typed on a command line or shown on a screen, so seen: the account's owner sets their own.
+            $user->must_change_password = true;
         }
         $user->forceFill(['role' => $role, 'is_active' => ! $this->option('off')])->save();
 

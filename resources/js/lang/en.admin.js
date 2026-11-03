@@ -26,6 +26,14 @@ export default {
             viewer: 'Reads only.',
         },
     },
+    account: {
+        title: 'My password',
+        forced: 'Your password was made or seen by someone else. Choose your own before you carry on.',
+        current: 'Current password',
+        new: 'New password',
+        confirm: 'New password again',
+        hint: 'At least 12 characters, and not the one you have. Changing it signs you out everywhere else.',
+    },
     audit: {
         title: 'Audit log',
         when: 'When',

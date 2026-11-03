@@ -28,6 +28,7 @@ const inputClass = 'w-full rounded-md border border-slate-300 px-3 py-2 text-sm'
         format="YYYY-MM-DD"
         display-format="jYYYY/jMM/jDD"
         locale="fa"
+        :convert-numbers="true"
         :auto-submit="true"
         :editable="false"
         :clearable="clearable"

@@ -610,6 +610,121 @@ class MessagingTest extends TestCase
         $this->get('/dashboard')->assertInertia(fn ($page) => $page->where('counts.messages_failed', 2));
     }
 
+    // --- "Send a reminder now" ---------------------------------------------
+
+    public function test_the_message_that_fits_is_chosen_from_where_the_subscription_stands(): void
+    {
+        $service = app(ReminderService::class);
+        $kind = fn (int $days, bool $blocked = false) => $service->kindForNow(
+            tap($this->endingIn($days, ['name_en' => 'C'.$days.($blocked ? 'b' : '')])->fresh(), fn ($s) => $blocked && $s->forceFill(['blocked_at' => now()])->save()),
+            ReminderService::today(),
+        );
+
+        $this->assertSame('expiring_30', $kind(100), 'still far off: the first reminder, with the real days');
+        $this->assertSame('expiring_30', $kind(20));
+        $this->assertSame('expiring_14', $kind(14));
+        $this->assertSame('expiring_7', $kind(3));
+        $this->assertSame('expiring_1', $kind(0));
+        $this->assertSame('expired', $kind(-5), 'whatever the window: someone asked for it');
+        $this->assertSame('blocked', $kind(10, blocked: true));
+    }
+
+    public function test_a_reminder_can_be_sent_by_hand_with_the_real_number_of_days(): void
+    {
+        $subscription = $this->endingIn(40);
+
+        $this->post("/customers/{$subscription->customer_id}/reminder")->assertRedirect()->assertSessionMissing('error');
+
+        $this->assertSame(2, Message::query()->count());           // email and WhatsApp of the one contact
+        $this->assertSame(['expiring_30'], Message::query()->pluck('kind')->unique()->values()->all());
+        $this->assertStringContainsString('۴۰ روز', Message::query()->where('channel', 'email')->firstOrFail()->body);
+        $this->assertDatabaseHas('audit_logs', ['action' => 'message.sent_by_hand', 'customer_id' => $subscription->customer_id]);
+    }
+
+    public function test_pressing_it_again_straight_away_sends_nothing_more_and_after_a_while_it_can_be_sent_again(): void
+    {
+        $subscription = $this->endingIn(7);
+        $url = "/customers/{$subscription->customer_id}/reminder";
+
+        $this->post($url)->assertSessionMissing('error');
+        $this->post($url)->assertSessionHas('error');
+        $this->assertSame(2, Message::query()->count(), 'not twice');
+
+        Carbon::setTestNow(Carbon::now()->addMinutes(11));
+        $this->post($url)->assertSessionMissing('error');
+        $this->assertSame(4, Message::query()->count());
+    }
+
+    public function test_a_reminder_by_hand_does_not_take_the_place_of_the_morning_one(): void
+    {
+        $subscription = $this->endingIn(7);
+        $this->post("/customers/{$subscription->customer_id}/reminder");
+        $this->assertSame(2, Message::query()->count());
+
+        $summary = app(ReminderService::class)->run();
+
+        $this->assertSame(2, $summary['queued'], 'the automatic reminder is still due, and goes out');
+        $this->assertSame(4, Message::query()->count());
+    }
+
+    public function test_a_blocked_customer_is_sent_the_blocked_notice_with_the_reason(): void
+    {
+        $subscription = $this->endingIn(7);
+        app(SubscriptionService::class)->block($subscription->fresh(), 'Unpaid invoice SUB-2026-0001');
+        Message::query()->delete();   // the notice sent when it was blocked, so the count below is the hand-sent ones
+
+        $this->post("/customers/{$subscription->customer_id}/reminder")->assertSessionMissing('error');
+
+        $this->assertSame(['blocked'], Message::query()->pluck('kind')->unique()->values()->all());
+        $this->assertStringContainsString('Unpaid invoice SUB-2026-0001', Message::query()->firstOrFail()->body);
+    }
+
+    public function test_with_nobody_to_write_to_it_says_so_and_does_not_use_up_the_wait(): void
+    {
+        $customer = $this->customer(['status' => 'active']);
+        $subscription = Subscription::query()->create([
+            'customer_id' => $customer->id, 'package_id' => $this->package(['code' => 'solo'])->id,
+            'starts_on' => '2026-01-01', 'ends_on' => ReminderService::today()->addDays(7)->toDateString(),
+        ]);
+        $url = "/customers/{$subscription->customer_id}/reminder";
+
+        $this->post($url)->assertSessionHas('error', fn ($m) => str_contains($m, 'no contact'));
+        $this->assertSame(['skipped'], Message::query()->pluck('status')->unique()->values()->all());
+
+        // They add a contact; they can send at once, not in ten minutes.
+        $this->contact($customer);
+        $this->post($url)->assertSessionMissing('error');
+        $this->assertTrue(Message::query()->where('status', 'sent')->exists());
+    }
+
+    public function test_a_customer_without_a_subscription_has_nothing_to_remind_about(): void
+    {
+        $customer = $this->customer();
+        $this->contact($customer);
+
+        $this->post("/customers/{$customer->id}/reminder")->assertSessionHas('error');
+
+        $this->assertSame(0, Message::query()->count());
+    }
+
+    public function test_who_may_send_a_reminder_by_hand(): void
+    {
+        $subscription = $this->endingIn(7);
+        $url = "/customers/{$subscription->customer_id}/reminder";
+
+        foreach (['support', 'viewer'] as $role) {
+            $this->actingAs($this->staff($role))->post($url)->assertForbidden();
+        }
+        $this->assertSame(0, Message::query()->count());
+
+        $this->actingAs($this->staff('sales'))->post($url)->assertRedirect()->assertSessionMissing('error');
+        $this->assertSame(2, Message::query()->count());
+
+        \Illuminate\Support\Facades\Cache::flush();
+        $this->actingAs($this->staff('finance'))->post($url)->assertRedirect()->assertSessionMissing('error');
+        $this->assertSame(4, Message::query()->count());
+    }
+
     public function test_the_artisan_command_is_registered(): void
     {
         $this->assertArrayHasKey('control:reminders', Artisan::all());

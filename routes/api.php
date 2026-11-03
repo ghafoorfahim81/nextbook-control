@@ -10,7 +10,9 @@ use Illuminate\Support\Facades\Route;
 | issued for its instance (Authorization: Bearer ...), and sees only its own
 | customer: the licence it may work under, and a place to report what it uses.
 */
-Route::middleware(['instance', 'throttle:120,1'])->group(function () {
+// The limit comes first: a request with a wrong token must count against it too,
+// or a token could be guessed at the full speed of the server.
+Route::middleware(['throttle:120,1', 'instance'])->group(function () {
     Route::get('/license', [LicenseController::class, 'show']);
     Route::get('/invoices', [InvoiceFeedController::class, 'index']);
     Route::post('/usage', [UsageController::class, 'store']);

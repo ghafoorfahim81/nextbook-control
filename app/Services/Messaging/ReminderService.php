@@ -53,6 +53,29 @@ class ReminderService
     }
 
     /**
+     * What to write to a customer when a person asks for it now, whatever the
+     * day: the message that fits where the subscription stands. Blocked gets the
+     * blocked notice, one that has ended the "it has ended" message, and one
+     * still running always an "ending" reminder (the nearest threshold, or the
+     * first one when it is still further off), with the real number of days.
+     */
+    public function kindForNow(Subscription $subscription, Carbon $today): string
+    {
+        if ($subscription->isBlocked()) {
+            return 'blocked';
+        }
+
+        $daysLeft = $subscription->daysLeft($today);
+        if ($daysLeft < 0) {
+            return 'expired';
+        }
+
+        $thresholds = collect(config('control.messaging.reminder_days'))->sort()->values();
+
+        return 'expiring_'.($thresholds->first(fn (int $days) => $days >= $daysLeft) ?? $thresholds->last());
+    }
+
+    /**
      * @return array{checked: int, due: int, queued: int, skipped: int, duplicates: int, lines: array<int, string>}
      */
     public function run(?Carbon $today = null, bool $dryRun = false): array

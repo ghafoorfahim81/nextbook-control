@@ -22,6 +22,8 @@ export default {
         title: 'Messages',
         none: 'Nothing has been sent to this customer yet.',
         retry: 'Try again',
+        send_now: 'Send a reminder now',
+        send_now_confirm: 'Send the reminder that fits this subscription to the customer\'s contacts now?',
         to: 'To',
         kinds: {
             expiring_30: 'Reminder, 30 days',

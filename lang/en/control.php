@@ -12,6 +12,11 @@ return [
     'no_subscription' => 'This customer has no subscription, so there is no licence to issue.',
     'saved' => 'Saved.',
     'contact' => ['bad_number' => 'The :field number is not a valid phone number.'],
+    'reminder' => [
+        'too_soon' => 'A reminder was just sent to this customer. Try again in :minutes minutes.',
+        'nobody' => 'Nothing was sent: this customer has no contact with an email address or a WhatsApp number to write to.',
+        'sent' => ':count message(s) queued.',
+    ],
     'message' => ['only_failed' => 'Only a message that failed can be tried again.'],
     'staff' => [
         'self_off' => 'You cannot switch yourself off.',
