@@ -121,6 +121,39 @@ class ApiTest extends TestCase
         $this->assertSame(2, $payload['license_version']);
     }
 
+    public function test_an_erp_gets_its_own_invoices_with_their_payments_and_no_one_elses(): void
+    {
+        [$kabul, $kabulToken] = $this->connected('Kabul Traders');
+        [$herat] = $this->connected('Herat Pharmacy');
+        $service = app(SubscriptionService::class);
+
+        $mine = $service->invoice($kabul->subscription, ['issued_on' => '2026-03-01', 'amount' => 1000, 'discount' => 100, 'currency' => 'AFN', 'description' => 'Year 1']);
+        $service->recordPayment($mine, ['amount' => 300, 'paid_on' => '2026-03-05', 'method' => 'hawala', 'reference' => 'HW-1']);
+        $void = $service->invoice($kabul->subscription, ['issued_on' => '2026-04-01', 'amount' => 50]);
+        $service->voidInvoice($void);
+        $service->invoice($herat->subscription, ['issued_on' => '2026-03-02', 'amount' => 999]);
+
+        $response = $this->getJson('/api/invoices', $this->asErp($kabulToken))->assertOk();
+
+        $this->assertCount(2, $response->json('invoices'), 'only Kabul Traders\' own');
+        $first = $response->json('invoices.1');
+        $this->assertSame($mine->number, $first['number']);
+        $this->assertSame('partial', $first['state']);
+        $this->assertEquals(600, $first['balance']);
+        $this->assertEquals(300, $first['paid']);
+        $this->assertSame('hawala', $first['payments'][0]['method']);
+        $this->assertSame('void', $response->json('invoices.0.state'));
+        $this->assertStringNotContainsString('999', json_encode($response->json()));
+    }
+
+    public function test_the_invoice_feed_needs_a_token_and_a_customer_with_no_invoices_gets_an_empty_list(): void
+    {
+        [, $token] = $this->connected();
+
+        $this->getJson('/api/invoices')->assertUnauthorized();
+        $this->getJson('/api/invoices', $this->asErp($token))->assertOk()->assertExactJson(['invoices' => []]);
+    }
+
     public function test_usage_is_stored_once_per_day_and_the_latest_wins(): void
     {
         [$customer, $token] = $this->connected();

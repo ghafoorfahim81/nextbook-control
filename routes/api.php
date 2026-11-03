@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\InvoiceFeedController;
 use App\Http\Controllers\Api\LicenseController;
 use App\Http\Controllers\Api\UsageController;
 use Illuminate\Support\Facades\Route;
@@ -11,5 +12,6 @@ use Illuminate\Support\Facades\Route;
 */
 Route::middleware(['instance', 'throttle:120,1'])->group(function () {
     Route::get('/license', [LicenseController::class, 'show']);
+    Route::get('/invoices', [InvoiceFeedController::class, 'index']);
     Route::post('/usage', [UsageController::class, 'store']);
 });
