@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
 import { useAuth } from '../composables/useAuth'
+import { useDates } from '../composables/useDates'
 import { t } from '../i18n'
 
 const props = defineProps({
@@ -34,7 +35,8 @@ const copy = async () => {
 }
 
 const input = 'w-full rounded-md border border-slate-300 px-3 py-2 text-sm'
-const when = (value) => (value ? String(value).replace('T', ' ').slice(0, 16) : t('instance.never'))
+const { fdt } = useDates()
+const when = (value) => (value ? fdt(value) : t('instance.never'))
 </script>
 
 <template>

@@ -2,8 +2,12 @@
 import { ref } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
 import Modal from './Modal.vue'
+import DateField from './DateField.vue'
 import { useAuth } from '../composables/useAuth'
+import { useDates } from '../composables/useDates'
 import { t } from '../i18n'
+
+const { fd } = useDates()
 
 const props = defineProps({
     customerId: String,
@@ -46,8 +50,8 @@ const primary = 'rounded-md bg-violet-600 px-4 py-2 text-sm font-semibold text-w
             <div class="flex flex-wrap items-center gap-x-5 gap-y-1 p-3 text-sm">
                 <span class="font-medium" dir="ltr">{{ row.number }}</span>
                 <span class="rounded-full px-2 py-0.5 text-xs font-semibold" :class="tone[row.state]">{{ t(`billing.states.${row.state}`) }}</span>
-                <span dir="ltr">{{ row.issued_on }}</span>
-                <span v-if="row.period" class="text-slate-500" dir="ltr">{{ row.period }}</span>
+                <span dir="ltr">{{ fd(row.issued_on) }}</span>
+                <span v-if="row.period_from && row.period_to" class="text-slate-500" dir="ltr">{{ fd(row.period_from) }} → {{ fd(row.period_to) }}</span>
                 <span>{{ t('billing.amount') }}: <b>{{ row.amount.toLocaleString() }} {{ row.currency }}</b><template v-if="row.discount"> (−{{ row.discount.toLocaleString() }})</template></span>
                 <span>{{ t('billing.paid') }}: {{ row.paid.toLocaleString() }}</span>
                 <span>{{ t('billing.balance') }}: {{ row.balance.toLocaleString() }}</span>
@@ -59,7 +63,7 @@ const primary = 'rounded-md bg-violet-600 px-4 py-2 text-sm font-semibold text-w
             <p v-if="row.description" class="px-3 pb-2 text-xs text-slate-500">{{ row.description }}</p>
             <ul v-if="row.payments.length" class="border-t bg-slate-50 text-sm">
                 <li v-for="p in row.payments" :key="p.id" class="flex flex-wrap items-center gap-x-5 px-3 py-1.5">
-                    <span dir="ltr">{{ p.paid_on }}</span>
+                    <span dir="ltr">{{ fd(p.paid_on) }}</span>
                     <b>{{ p.amount.toLocaleString() }}</b>
                     <span>{{ t(`billing.methods.${p.method}`) }}</span>
                     <span v-if="p.reference" class="text-slate-500" dir="ltr">{{ p.reference }}</span>
@@ -71,10 +75,10 @@ const primary = 'rounded-md bg-violet-600 px-4 py-2 text-sm font-semibold text-w
         <Modal v-if="open === 'invoice'" :title="t('billing.new')" wide @close="close">
             <form class="space-y-3" @submit.prevent="saveInvoice">
                 <div class="grid gap-3 sm:grid-cols-2">
-                    <label class="block text-sm"><span class="mb-1 block text-slate-600">{{ t('billing.issued_on') }}</span><input v-model="invoice.issued_on" type="date" :class="input" dir="ltr" /><span v-if="invoice.errors.issued_on" class="text-red-600">{{ invoice.errors.issued_on }}</span></label>
-                    <label class="block text-sm"><span class="mb-1 block text-slate-600">{{ t('billing.due_on') }}</span><input v-model="invoice.due_on" type="date" :class="input" dir="ltr" /></label>
-                    <label class="block text-sm"><span class="mb-1 block text-slate-600">{{ t('billing.period_from') }}</span><input v-model="invoice.period_from" type="date" :class="input" dir="ltr" /></label>
-                    <label class="block text-sm"><span class="mb-1 block text-slate-600">{{ t('billing.period_to') }}</span><input v-model="invoice.period_to" type="date" :class="input" dir="ltr" /></label>
+                    <div class="block text-sm"><span class="mb-1 block text-slate-600">{{ t('billing.issued_on') }}</span><DateField v-model="invoice.issued_on" /><span v-if="invoice.errors.issued_on" class="text-red-600">{{ invoice.errors.issued_on }}</span></div>
+                    <div class="block text-sm"><span class="mb-1 block text-slate-600">{{ t('billing.due_on') }}</span><DateField v-model="invoice.due_on" clearable /></div>
+                    <div class="block text-sm"><span class="mb-1 block text-slate-600">{{ t('billing.period_from') }}</span><DateField v-model="invoice.period_from" clearable /></div>
+                    <div class="block text-sm"><span class="mb-1 block text-slate-600">{{ t('billing.period_to') }}</span><DateField v-model="invoice.period_to" clearable /></div>
                     <label class="block text-sm"><span class="mb-1 block text-slate-600">{{ t('billing.amount') }} *</span><input v-model="invoice.amount" type="number" min="0" step="any" :class="input" dir="ltr" /><span v-if="invoice.errors.amount" class="text-red-600">{{ invoice.errors.amount }}</span></label>
                     <label class="block text-sm"><span class="mb-1 block text-slate-600">{{ t('billing.discount') }}</span><input v-model="invoice.discount" type="number" min="0" step="any" :class="input" dir="ltr" /></label>
                     <label class="block text-sm"><span class="mb-1 block text-slate-600">{{ t('billing.currency') }}</span><input v-model="invoice.currency" maxlength="3" :class="input" dir="ltr" /></label>
@@ -89,7 +93,8 @@ const primary = 'rounded-md bg-violet-600 px-4 py-2 text-sm font-semibold text-w
                 <p class="text-sm text-slate-600" dir="ltr">{{ paying?.number }} — {{ t('billing.balance') }}: {{ paying?.balance.toLocaleString() }} {{ paying?.currency }}</p>
                 <div class="grid grid-cols-2 gap-3">
                     <label class="block text-sm"><span class="mb-1 block text-slate-600">{{ t('billing.amount') }}</span><input v-model="payment.amount" type="number" min="0" step="any" :class="input" dir="ltr" /><span v-if="payment.errors.amount" class="text-red-600">{{ payment.errors.amount }}</span></label>
-                    <label class="block text-sm"><span class="mb-1 block text-slate-600">{{ t('billing.paid_on') }}</span><input v-model="payment.paid_on" type="date" :class="input" dir="ltr" /></label>
+                    <div class="block text-sm"><span class="mb-1 block text-slate-600">{{ t('billing.paid_on') }}</span><DateField v-model="payment.paid_on" />
+                        <span v-if="payment.errors.paid_on" class="text-red-600">{{ payment.errors.paid_on }}</span></div>
                     <label class="block text-sm"><span class="mb-1 block text-slate-600">{{ t('billing.method') }}</span>
                         <select v-model="payment.method" :class="input"><option v-for="m in ['cash', 'hawala', 'bank', 'other']" :key="m" :value="m">{{ t(`billing.methods.${m}`) }}</option></select></label>
                     <label class="block text-sm"><span class="mb-1 block text-slate-600">{{ t('billing.reference') }}</span><input v-model="payment.reference" :class="input" dir="ltr" /></label>

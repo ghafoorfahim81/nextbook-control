@@ -3,8 +3,12 @@ import { computed, reactive, ref } from 'vue'
 import { useForm } from '@inertiajs/vue3'
 import Modal from './Modal.vue'
 import StatusBadge from './StatusBadge.vue'
+import DateField from './DateField.vue'
 import { useAuth } from '../composables/useAuth'
+import { useDates } from '../composables/useDates'
 import { t } from '../i18n'
+
+const { fd } = useDates()
 
 const props = defineProps({
     customerId: String,
@@ -83,8 +87,8 @@ const rows = computed(() => (sub.value ? [
                 <dd>{{ sub.package }} <span class="text-xs text-slate-500">({{ t(`sub.${sub.kind}`) }})</span></dd>
                 <dt class="text-slate-500">{{ t('common.status') }}</dt>
                 <dd><StatusBadge kind="state" :value="sub.state" /> <span v-if="sub.state === 'expiring'" class="text-xs text-amber-700">{{ t('sub.days_left', { n: sub.days_left }) }}</span></dd>
-                <dt class="text-slate-500">{{ t('sub.starts_on') }}</dt><dd dir="ltr" class="text-start">{{ sub.starts_on }}</dd>
-                <dt class="text-slate-500">{{ t('sub.ends_on') }}</dt><dd dir="ltr" class="text-start">{{ sub.ends_on }}</dd>
+                <dt class="text-slate-500">{{ t('sub.starts_on') }}</dt><dd dir="ltr" class="text-start">{{ fd(sub.starts_on) }}</dd>
+                <dt class="text-slate-500">{{ t('sub.ends_on') }}</dt><dd dir="ltr" class="text-start">{{ fd(sub.ends_on) }}</dd>
                 <dt v-if="sub.block_reason" class="text-slate-500">{{ t('sub.reason') }}</dt><dd v-if="sub.block_reason" class="text-red-700">{{ sub.block_reason }}</dd>
                 <template v-for="[label, value] in rows" :key="label"><dt class="text-slate-500">{{ t(label) }}</dt><dd>{{ value }}</dd></template>
                 <dt class="text-slate-500">{{ t('sub.modules') }}</dt>
@@ -95,14 +99,14 @@ const rows = computed(() => (sub.value ? [
                 <dt class="text-slate-500">{{ t('sub.license_version') }}</dt><dd>{{ sub.license_version }}</dd>
             </dl>
             <p v-if="sub.has_overrides" class="mt-2 rounded bg-amber-50 px-2 py-1 text-xs text-amber-800">{{ t('sub.overrides') }}</p>
-            <p v-if="usage" class="mt-2 text-xs text-slate-500">{{ t('sub.usage') }}: {{ usage.taken_on }}</p>
+            <p v-if="usage" class="mt-2 text-xs text-slate-500">{{ t('sub.usage') }}: {{ fd(usage.taken_on) }}</p>
             <p v-else class="mt-2 text-xs text-slate-500">{{ t('sub.no_usage') }}</p>
 
             <div v-if="changes.length" class="mt-4">
                 <h3 class="mb-1 text-sm font-medium">{{ t('sub.history') }}</h3>
                 <ul class="space-y-0.5 text-xs text-slate-600">
                     <li v-for="(c, i) in changes" :key="i" class="flex gap-2">
-                        <span dir="ltr">{{ String(c.created_at).slice(0, 10) }}</span>
+                        <span dir="ltr">{{ fd(String(c.created_at).slice(0, 10)) }}</span>
                         <span class="font-medium">{{ t(`change.${c.type}`) }}</span>
                         <span v-if="c.reason" class="text-slate-500">— {{ c.reason }}</span>
                     </li>
@@ -132,8 +136,10 @@ const rows = computed(() => (sub.value ? [
                     <select v-model="assign.package_id" :class="input"><option :value="null">—</option><option v-for="p in packages" :key="p.id" :value="p.id">{{ p.name }}</option></select>
                     <span v-if="assign.errors.package_id" class="text-red-600">{{ assign.errors.package_id }}</span></label>
                 <div class="grid grid-cols-2 gap-3">
-                    <label class="block text-sm"><span class="mb-1 block text-slate-600">{{ t('sub.starts_on') }}</span><input v-model="assign.starts_on" type="date" :class="input" dir="ltr" /></label>
-                    <label class="block text-sm"><span class="mb-1 block text-slate-600">{{ t('sub.ends_on') }}</span><input v-model="assign.ends_on" type="date" :class="input" dir="ltr" /></label>
+                    <div class="block text-sm"><span class="mb-1 block text-slate-600">{{ t('sub.starts_on') }}</span><DateField v-model="assign.starts_on" />
+                        <span v-if="assign.errors.starts_on" class="text-red-600">{{ assign.errors.starts_on }}</span></div>
+                    <div class="block text-sm"><span class="mb-1 block text-slate-600">{{ t('sub.ends_on') }}</span><DateField v-model="assign.ends_on" />
+                        <span v-if="assign.errors.ends_on" class="text-red-600">{{ assign.errors.ends_on }}</span></div>
                 </div>
                 <label class="block text-sm"><span class="mb-1 block text-slate-600">{{ t('sub.notes') }}</span><input v-model="assign.notes" :class="input" /></label>
                 <button type="submit" :disabled="assign.processing" :class="primary">{{ t('common.save') }}</button>

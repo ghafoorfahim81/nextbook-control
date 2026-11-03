@@ -4,6 +4,9 @@ import { Head, Link, router, usePage } from '@inertiajs/vue3'
 import AppLayout from '../../Layouts/AppLayout.vue'
 import StatusBadge from '../../Components/StatusBadge.vue'
 import { t } from '../../i18n'
+import { useDates } from '../../composables/useDates'
+
+const { fd } = useDates()
 
 const props = defineProps({
     customers: Object,
@@ -58,7 +61,7 @@ const apply = () => {
                         <td class="p-3"><StatusBadge kind="status" :value="c.status" /></td>
                         <td class="p-3">{{ c.package ?? t('common.none') }}</td>
                         <td class="p-3"><StatusBadge kind="state" :value="c.state" /></td>
-                        <td class="p-3" dir="ltr">{{ c.ends_on ?? t('common.none') }}</td>
+                        <td class="p-3" dir="ltr">{{ c.ends_on ? fd(c.ends_on) : t('common.none') }}</td>
                         <td class="p-3">{{ c.province ?? t('common.none') }}</td>
                     </tr>
                     <tr v-if="!customers.data.length">

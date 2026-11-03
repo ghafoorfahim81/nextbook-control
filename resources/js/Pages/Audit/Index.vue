@@ -2,7 +2,11 @@
 import { ref } from 'vue'
 import { Head, Link, router } from '@inertiajs/vue3'
 import AppLayout from '../../Layouts/AppLayout.vue'
+import DateField from '../../Components/DateField.vue'
+import { useDates } from '../../composables/useDates'
 import { t } from '../../i18n'
+
+const { fdt } = useDates()
 
 const props = defineProps({
     logs: Object,
@@ -40,10 +44,10 @@ const input = 'rounded-md border border-slate-300 px-3 py-2 text-sm'
                 <select v-model="filter.action" :class="input" @change="apply"><option value="">{{ t('common.all') }}</option><option v-for="g in groups" :key="g" :value="g">{{ g }}</option></select></label>
             <label class="text-sm"><span class="mb-1 block text-xs text-slate-500">{{ t('audit.customer') }}</span>
                 <input v-model="filter.customer" :class="input" @input="apply" /></label>
-            <label class="text-sm"><span class="mb-1 block text-xs text-slate-500">{{ t('audit.from') }}</span>
-                <input v-model="filter.from" type="date" :class="input" dir="ltr" @change="apply" /></label>
-            <label class="text-sm"><span class="mb-1 block text-xs text-slate-500">{{ t('audit.to') }}</span>
-                <input v-model="filter.to" type="date" :class="input" dir="ltr" @change="apply" /></label>
+            <div class="text-sm"><span class="mb-1 block text-xs text-slate-500">{{ t('audit.from') }}</span>
+                <DateField v-model="filter.from" clearable @update:model-value="apply" /></div>
+            <div class="text-sm"><span class="mb-1 block text-xs text-slate-500">{{ t('audit.to') }}</span>
+                <DateField v-model="filter.to" clearable @update:model-value="apply" /></div>
         </div>
 
         <div class="overflow-x-auto rounded-lg border border-slate-200 bg-white">
@@ -61,7 +65,7 @@ const input = 'rounded-md border border-slate-300 px-3 py-2 text-sm'
                 <tbody>
                     <template v-for="log in logs.data" :key="log.id">
                         <tr class="border-t align-top">
-                            <td class="whitespace-nowrap p-3" dir="ltr">{{ log.at }}</td>
+                            <td class="whitespace-nowrap p-3" dir="ltr">{{ fdt(log.at) }}</td>
                             <td class="p-3">{{ log.staff ?? t('common.none') }}</td>
                             <td class="p-3"><span dir="ltr" class="font-mono text-xs">{{ log.action }}</span></td>
                             <td class="p-3"><Link v-if="log.customer_id" :href="`/customers/${log.customer_id}`" class="text-violet-700 hover:underline">{{ log.customer }}</Link><span v-else>{{ t('common.none') }}</span></td>

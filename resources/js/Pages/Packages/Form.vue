@@ -1,7 +1,11 @@
 <script setup>
 import { Head, Link, useForm } from '@inertiajs/vue3'
 import AppLayout from '../../Layouts/AppLayout.vue'
+import DateField from '../../Components/DateField.vue'
+import { useDates } from '../../composables/useDates'
 import { t } from '../../i18n'
+
+const { fd } = useDates()
 
 const props = defineProps({
     package: { type: Object, default: null },
@@ -56,8 +60,8 @@ const input = 'w-full rounded-md border border-slate-300 px-3 py-2 text-sm'
                     <input v-model="form.period_months" type="number" min="1" :class="input" dir="ltr" /><span v-if="form.errors.period_months" class="text-red-600">{{ form.errors.period_months }}</span></label>
             </div>
             <p class="text-xs text-slate-500">{{ t('packages.price_hint') }}</p>
-            <label v-if="p" class="block max-w-xs text-sm"><span class="mb-1 block text-slate-600">{{ t('packages.price_effective_from') }}</span>
-                <input v-model="form.price_effective_from" type="date" :class="input" dir="ltr" /></label>
+            <div v-if="p" class="block max-w-xs text-sm"><span class="mb-1 block text-slate-600">{{ t('packages.price_effective_from') }}</span>
+                <DateField v-model="form.price_effective_from" clearable /></div>
 
             <div class="grid gap-4 sm:grid-cols-4">
                 <label v-for="key in ['max_users', 'max_branches', 'max_storage_mb', 'max_monthly_documents']" :key="key" class="block text-sm">
@@ -82,7 +86,7 @@ const input = 'w-full rounded-md border border-slate-300 px-3 py-2 text-sm'
             <div v-if="p?.price_history?.length" class="rounded-md bg-slate-50 p-3 text-sm">
                 <div class="mb-1 font-medium">{{ t('packages.price_history') }}</div>
                 <ul class="space-y-0.5 text-slate-600">
-                    <li v-for="(h, i) in p.price_history" :key="i" dir="ltr" class="text-start">{{ h.effective_from }} — {{ h.amount.toLocaleString() }} {{ h.currency }} / {{ h.period_months }}</li>
+                    <li v-for="(h, i) in p.price_history" :key="i" dir="ltr" class="text-start">{{ fd(h.effective_from) }} — {{ h.amount.toLocaleString() }} {{ h.currency }} / {{ h.period_months }}</li>
                 </ul>
             </div>
 

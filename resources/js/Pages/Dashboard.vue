@@ -2,6 +2,9 @@
 import { Head, Link } from '@inertiajs/vue3'
 import AppLayout from '../Layouts/AppLayout.vue'
 import { t } from '../i18n'
+import { useDates } from '../composables/useDates'
+
+const { fd } = useDates()
 
 defineProps({
     counts: Object,
@@ -42,7 +45,7 @@ const cards = ['customers', 'active', 'trial', 'expiring', 'blocked', 'unpaid']
                                 <Link :href="`/customers/${row.customer_id}`" class="font-medium text-violet-700 hover:underline">{{ row.customer }}</Link>
                             </td>
                             <td class="p-3 text-slate-600">{{ row.package }}</td>
-                            <td class="p-3" dir="ltr">{{ row.ends_on }}</td>
+                            <td class="p-3" dir="ltr">{{ fd(row.ends_on) }}</td>
                             <td class="p-3 text-amber-700">{{ row.days_left }}</td>
                         </tr>
                     </tbody>
