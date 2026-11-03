@@ -7,6 +7,7 @@ use App\Http\Controllers\AuditController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\MessageController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\CustomerSubscriptionController;
@@ -35,6 +36,11 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware(['active_staff', 'two_factor'])->group(function () {
         Route::get('/audit', [AuditController::class, 'index'])->name('audit.index');
+        Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+        Route::get('/reports/revenue', [ReportController::class, 'revenue'])->name('reports.revenue');
+        Route::get('/reports/receivables', [ReportController::class, 'receivables'])->name('reports.receivables');
+        Route::get('/reports/renewals', [ReportController::class, 'renewals'])->name('reports.renewals');
+        Route::get('/reports/usage', [ReportController::class, 'usage'])->name('reports.usage');
         Route::resource('staff', StaffController::class)->parameters(['staff' => 'user'])->only(['index', 'create', 'store', 'edit', 'update']);
         Route::post('staff/{user}/password', [StaffController::class, 'resetPassword'])->name('staff.password');
         Route::post('staff/{user}/two-factor-reset', [StaffController::class, 'resetTwoFactor'])->name('staff.two-factor-reset');

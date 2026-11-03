@@ -60,3 +60,22 @@ export function formatDateTime(value, locale = 'fa') {
 
     return time ? `${date} ${usesJalali(locale) ? withDigits(time) : time}` : date
 }
+
+/** Month names as they are said in Afghanistan, in the order of the Solar Hijri year. */
+const JALALI_MONTHS = ['حمل', 'ثور', 'جوزا', 'سرطان', 'اسد', 'سنبله', 'میزان', 'عقرب', 'قوس', 'جدی', 'دلو', 'حوت']
+const GREGORIAN_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+/**
+ * The name of a report month: "عقرب ۱۴۰۵" for Persian and Pashto, "Nov 2026"
+ * for English. A month from the server carries its Solar Hijri year and month
+ * (jy, jm) when it is one; otherwise it is a calendar month starting on `from`.
+ */
+export function monthLabel(month, locale = 'fa') {
+    if (usesJalali(locale) && month.jm) {
+        return `${JALALI_MONTHS[month.jm - 1]} ${withDigits(String(month.jy))}`
+    }
+
+    const [year, mm] = String(month.from).split('-')
+
+    return `${GREGORIAN_MONTHS[Number(mm) - 1]} ${year}`
+}

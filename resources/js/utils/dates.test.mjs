@@ -60,3 +60,12 @@ test('display of a timestamp keeps the time', () => {
     assert.equal(formatDateTime('2026-11-03', 'fa'), '۱۴۰۵/۰۸/۱۲')
     assert.equal(formatDateTime(null, 'fa'), '')
 })
+
+test('a report month is named the way it is said', async () => {
+    const { monthLabel } = await import('./dates.js')
+    assert.equal(monthLabel({ jy: 1405, jm: 8, from: '2026-10-23' }, 'fa'), 'عقرب ۱۴۰۵')
+    assert.equal(monthLabel({ jy: 1405, jm: 1, from: '2026-03-21' }, 'ps'), 'حمل ۱۴۰۵')
+    assert.equal(monthLabel({ jy: 1404, jm: 12, from: '2026-02-20' }, 'fa'), 'حوت ۱۴۰۴')
+    assert.equal(monthLabel({ jy: 0, jm: 0, from: '2026-11-01' }, 'en'), 'Nov 2026')
+    assert.equal(monthLabel({ jy: 1405, jm: 8, from: '2026-10-23' }, 'en'), 'Oct 2026', 'English is always calendar months')
+})

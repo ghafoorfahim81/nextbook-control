@@ -1,15 +1,18 @@
 import manage from './en.manage'
 import admin from './en.admin'
 import comms from './en.comms'
+import reports from './en.reports'
 
 export default {
     ...manage,
     ...admin,
     ...comms,
+    ...reports,
     nav: {
         dashboard: 'Dashboard',
         customers: 'Customers',
         packages: 'Packages',
+        reports: 'Reports',
         staff: 'Staff',
         audit: 'Audit log',
         logout: 'Sign out',

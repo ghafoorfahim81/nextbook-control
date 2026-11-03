@@ -14,6 +14,7 @@ const nav = computed(() => [
     { key: 'dashboard', href: '/dashboard', ability: 'reports.view' },
     { key: 'customers', href: '/customers', ability: 'customers.view' },
     { key: 'packages', href: '/packages', ability: 'packages.view' },
+    { key: 'reports', href: '/reports', ability: 'reports.view' },
     { key: 'staff', href: '/staff', ability: 'staff.manage' },
     { key: 'audit', href: '/audit', ability: 'audit.view' },
 ].filter((item) => can(item.ability)))

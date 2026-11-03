@@ -1,15 +1,18 @@
 import manage from './fa.manage'
 import admin from './fa.admin'
 import comms from './fa.comms'
+import reports from './fa.reports'
 
 export default {
     ...manage,
     ...admin,
     ...comms,
+    ...reports,
     nav: {
         dashboard: 'داشبورد',
         customers: 'مشتریان',
         packages: 'بسته‌ها',
+        reports: 'گزارش‌ها',
         staff: 'کارکنان',
         audit: 'گزارش ممیزی',
         logout: 'خروج',
