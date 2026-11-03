@@ -1,7 +1,9 @@
 import manage from './en.manage'
+import admin from './en.admin'
 
 export default {
     ...manage,
+    ...admin,
     nav: {
         dashboard: 'Dashboard',
         customers: 'Customers',

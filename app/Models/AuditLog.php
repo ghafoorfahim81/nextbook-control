@@ -17,6 +17,16 @@ class AuditLog extends Model
 
     protected $casts = ['before' => 'array', 'after' => 'array'];
 
+    public function staff(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(User::class, 'staff_id');
+    }
+
+    public function customer(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Customer::class)->withTrashed();
+    }
+
     protected static function booted(): void
     {
         static::updating(fn () => throw new LogicException('Audit log rows cannot be changed.'));

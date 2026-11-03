@@ -85,7 +85,9 @@ class ScreensTest extends TestCase
 
     public function test_a_switched_off_account_can_open_nothing(): void
     {
-        $this->actingAs($this->staff('owner', active: false))->get('/customers')->assertForbidden();
+        // Switched off, they are signed out on the request and sent to the login page.
+        $this->actingAs($this->staff('owner', active: false))->get('/customers')->assertRedirect('/login');
+        $this->assertGuest();
     }
 
     public function test_the_list_filters_by_name_in_any_language_and_by_status(): void

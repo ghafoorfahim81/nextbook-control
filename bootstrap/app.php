@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'instance' => \App\Http\Middleware\AuthenticateInstance::class,
             'two_factor' => \App\Http\Middleware\RequireTwoFactor::class,
+            'active_staff' => \App\Http\Middleware\LogOutInactiveStaff::class,
         ]);
         $middleware->redirectGuestsTo(fn () => route('login'));
         $middleware->redirectUsersTo(fn () => route('dashboard'));

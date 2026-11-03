@@ -3,7 +3,9 @@
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\TwoFactorChallengeController;
 use App\Http\Controllers\Auth\TwoFactorSetupController;
+use App\Http\Controllers\AuditController;
 use App\Http\Controllers\BillingController;
+use App\Http\Controllers\StaffController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\CustomerSubscriptionController;
 use App\Http\Controllers\DashboardController;
@@ -29,7 +31,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/two-factor-setup', [TwoFactorSetupController::class, 'show'])->name('two-factor.setup');
     Route::post('/two-factor-setup', [TwoFactorSetupController::class, 'store']);
 
-    Route::middleware('two_factor')->group(function () {
+    Route::middleware(['active_staff', 'two_factor'])->group(function () {
+        Route::get('/audit', [AuditController::class, 'index'])->name('audit.index');
+        Route::resource('staff', StaffController::class)->parameters(['staff' => 'user'])->only(['index', 'create', 'store', 'edit', 'update']);
+        Route::post('staff/{user}/password', [StaffController::class, 'resetPassword'])->name('staff.password');
+        Route::post('staff/{user}/two-factor-reset', [StaffController::class, 'resetTwoFactor'])->name('staff.two-factor-reset');
+
         Route::get('/dashboard', DashboardController::class)->name('dashboard');
         Route::resource('customers', CustomerController::class)->except('destroy');
         Route::resource('packages', PackageController::class)->except(['show', 'destroy']);

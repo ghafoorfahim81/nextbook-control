@@ -11,6 +11,10 @@ return [
     'overpayment' => 'The payment is more than what is left to pay (:balance).',
     'no_subscription' => 'This customer has no subscription, so there is no licence to issue.',
     'saved' => 'Saved.',
+    'staff' => [
+        'self_off' => 'You cannot switch yourself off.',
+        'last_owner' => 'This is the last active owner: make someone else an owner first.',
+    ],
     'auth' => [
         'failed' => 'These credentials do not match, or the account is switched off.',
         'throttle' => 'Too many attempts. Try again in :seconds seconds.',
