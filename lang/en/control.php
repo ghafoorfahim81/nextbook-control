@@ -10,4 +10,10 @@ return [
     'payment_positive' => 'The payment must be more than zero.',
     'overpayment' => 'The payment is more than what is left to pay (:balance).',
     'no_subscription' => 'This customer has no subscription, so there is no licence to issue.',
+    'saved' => 'Saved.',
+    'auth' => [
+        'failed' => 'These credentials do not match, or the account is switched off.',
+        'throttle' => 'Too many attempts. Try again in :seconds seconds.',
+        'invalid_code' => 'That code is not valid.',
+    ],
 ];

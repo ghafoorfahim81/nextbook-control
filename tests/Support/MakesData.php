@@ -8,12 +8,28 @@ use App\Models\User;
 
 trait MakesData
 {
-    protected function staff(string $role = 'owner', bool $active = true): User
+    /** A member of staff; by default with two-factor already set up, as every account must have. */
+    protected function staff(string $role = 'owner', bool $active = true, bool $twoFactor = true): User
     {
         $user = User::factory()->create();
         $user->forceFill(['role' => $role, 'is_active' => $active])->save();
 
+        if ($twoFactor) {
+            $user->forceFill([
+                'two_factor_secret' => (new \PragmaRX\Google2FA\Google2FA())->generateSecretKey(32),
+                'two_factor_confirmed_at' => now(),
+            ])->save();
+        }
+
         return $user;
+    }
+
+    /** The code an authenticator app would show now, or one step later. */
+    protected function otp(User $user, int $stepsAhead = 0): string
+    {
+        $google2fa = new \PragmaRX\Google2FA\Google2FA();
+
+        return $google2fa->oathTotp($user->two_factor_secret, $google2fa->getTimestamp() + $stepsAhead);
     }
 
     protected function customer(array $overrides = []): Customer

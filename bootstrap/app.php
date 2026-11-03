@@ -12,7 +12,13 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        $middleware->alias(['instance' => \App\Http\Middleware\AuthenticateInstance::class]);
+        $middleware->web(append: [\App\Http\Middleware\HandleInertiaRequests::class]);
+        $middleware->alias([
+            'instance' => \App\Http\Middleware\AuthenticateInstance::class,
+            'two_factor' => \App\Http\Middleware\RequireTwoFactor::class,
+        ]);
+        $middleware->redirectGuestsTo(fn () => route('login'));
+        $middleware->redirectUsersTo(fn () => route('dashboard'));
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
