@@ -40,6 +40,10 @@ class LicenseService
             'kind' => $subscription->kind,
             'starts_on' => $subscription->starts_on->toDateString(),
             'ends_on' => $subscription->ends_on->toDateString(),
+            // `state` and `writes_allowed` are true as of `issued_at` only; an
+            // ERP works them out again from `ends_on` and `blocked` each day,
+            // since a licence does not change on the day a subscription ends.
+            'blocked' => $subscription->isBlocked(),
             'writes_allowed' => $subscription->allowsWrites(),
             'block_reason' => $subscription->isBlocked() ? $subscription->block_reason : null,
             'modules' => array_values($limits['modules']),
