@@ -5,6 +5,8 @@ import StatusBadge from '../../Components/StatusBadge.vue'
 import SubscriptionPanel from '../../Components/SubscriptionPanel.vue'
 import InstancePanel from '../../Components/InstancePanel.vue'
 import InvoicesPanel from '../../Components/InvoicesPanel.vue'
+import ContactsPanel from '../../Components/ContactsPanel.vue'
+import MessagesPanel from '../../Components/MessagesPanel.vue'
 import { useAuth } from '../../composables/useAuth'
 import { t } from '../../i18n'
 
@@ -13,6 +15,7 @@ const props = defineProps({
     subscription: { type: Object, default: null },
     instance: { type: Object, default: null },
     contacts: { type: Array, default: () => [] },
+    messages: { type: Array, default: () => [] },
     packages: { type: Array, default: () => [] },
     erpModules: { type: Array, default: () => [] },
     invoices: { type: Array, default: () => [] },
@@ -66,6 +69,10 @@ const rows = [
             />
 
             <InstancePanel :customer-id="customer.id" :instance="instance" :issued-token="issuedToken" />
+
+            <ContactsPanel :customer-id="customer.id" :contacts="contacts" />
+
+            <MessagesPanel :messages="messages" />
 
             <div class="lg:col-span-2">
                 <InvoicesPanel :customer-id="customer.id" :currency="customer.base_currency" :has-subscription="!!subscription" :invoices="invoices" />

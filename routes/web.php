@@ -5,6 +5,8 @@ use App\Http\Controllers\Auth\TwoFactorChallengeController;
 use App\Http\Controllers\Auth\TwoFactorSetupController;
 use App\Http\Controllers\AuditController;
 use App\Http\Controllers\BillingController;
+use App\Http\Controllers\ContactController;
+use App\Http\Controllers\MessageController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\CustomerSubscriptionController;
@@ -55,7 +57,11 @@ Route::middleware('auth')->group(function () {
             Route::post('instance/token', [InstanceController::class, 'issueToken'])->name('instance.token');
 
             Route::post('invoices', [BillingController::class, 'storeInvoice'])->name('invoices.store');
+            Route::post('contacts', [ContactController::class, 'store'])->name('contacts.store');
         });
+        Route::put('contacts/{contact}', [ContactController::class, 'update'])->name('contacts.update');
+        Route::delete('contacts/{contact}', [ContactController::class, 'destroy'])->name('contacts.destroy');
+        Route::post('messages/{message}/retry', [MessageController::class, 'retry'])->name('messages.retry');
         Route::post('invoices/{invoice}/void', [BillingController::class, 'voidInvoice'])->name('invoices.void');
         Route::post('invoices/{invoice}/payments', [BillingController::class, 'storePayment'])->name('payments.store');
         Route::delete('payments/{payment}', [BillingController::class, 'destroyPayment'])->name('payments.destroy');

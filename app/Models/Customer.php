@@ -53,6 +53,11 @@ class Customer extends Model
         return $this->hasMany(UsageSnapshot::class);
     }
 
+    public function messages(): HasMany
+    {
+        return $this->hasMany(Message::class);
+    }
+
     public function displayName(): string
     {
         return $this->name_fa ?: $this->name_en;

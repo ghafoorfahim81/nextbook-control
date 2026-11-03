@@ -48,6 +48,8 @@ class DashboardController extends Controller
                 'expiring' => $subscriptions->filter(fn (Subscription $s) => $s->state() === 'expiring')->count(),
                 'blocked' => ($states['blocked'] ?? 0) + ($states['expired'] ?? 0),
                 'unpaid' => $unpaid,
+                // Messages that did not get through: someone should look.
+                'messages_failed' => \App\Models\Message::query()->where('status', 'failed')->count(),
             ],
             'receivable' => collect($receivable)->map(fn ($amount, $currency) => ['currency' => $currency, 'amount' => (float) $amount])->values(),
             'ending' => $ending,

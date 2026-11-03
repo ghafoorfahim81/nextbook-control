@@ -1,9 +1,11 @@
 import manage from './en.manage'
 import admin from './en.admin'
+import comms from './en.comms'
 
 export default {
     ...manage,
     ...admin,
+    ...comms,
     nav: {
         dashboard: 'Dashboard',
         customers: 'Customers',
@@ -62,6 +64,7 @@ export default {
         expiring: 'Expiring in 30 days',
         blocked: 'Blocked or expired',
         unpaid: 'Unpaid invoices',
+        messages_failed: 'Messages that failed',
         receivable: 'Owed to us',
         expiring_list: 'Subscriptions ending soon',
         no_expiring: 'None in the next 30 days.',

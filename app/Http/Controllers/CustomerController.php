@@ -129,7 +129,22 @@ class CustomerController extends Controller
             'instance' => $customer->instance
                 ? $customer->instance->only(['erp_company_id', 'base_url', 'erp_version', 'last_license_pull_at', 'last_usage_at']) + ['has_token' => $customer->instance->api_token_hash !== null]
                 : null,
-            'contacts' => $customer->contacts,
+            'contacts' => $customer->contacts->sortByDesc('is_primary')->values()->map(fn ($contact) => $contact->only([
+                'id', 'name', 'role', 'phone', 'email', 'whatsapp', 'is_primary', 'wants_email', 'wants_whatsapp',
+            ]) + [
+                // Whether a WhatsApp message could actually be sent to this person.
+                'whatsapp_ok' => \App\Support\Phone::e164($contact->whatsapp ?: $contact->phone, (string) config('control.messaging.default_country_code')) !== null,
+            ]),
+            'messages' => $customer->messages()->with('contact:id,name')->latest('created_at')->latest('id')->limit(15)->get()->map(fn ($message) => [
+                'id' => $message->id,
+                'kind' => $message->kind,
+                'channel' => $message->channel,
+                'to' => $message->to,
+                'contact' => $message->contact?->name,
+                'status' => $message->status,
+                'error' => $message->error,
+                'at' => ($message->sent_at ?? $message->created_at)->toDateTimeString(),
+            ]),
         ]);
     }
 

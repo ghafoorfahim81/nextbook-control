@@ -12,13 +12,13 @@ defineProps({
     ending: { type: Array, default: () => [] },
 })
 
-const cards = ['customers', 'active', 'trial', 'expiring', 'blocked', 'unpaid']
+const cards = ['customers', 'active', 'trial', 'expiring', 'blocked', 'unpaid', 'messages_failed']
 </script>
 
 <template>
     <Head :title="t('dashboard.title')" />
     <AppLayout :title="t('dashboard.title')">
-        <div class="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
+        <div class="grid grid-cols-2 gap-3 lg:grid-cols-4 xl:grid-cols-7">
             <div v-for="key in cards" :key="key" class="rounded-lg border border-slate-200 bg-white p-4">
                 <div class="text-xs text-slate-500">{{ t(`dashboard.${key}`) }}</div>
                 <div class="mt-1 text-2xl font-bold">{{ counts[key] }}</div>

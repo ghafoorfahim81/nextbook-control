@@ -1,9 +1,11 @@
 import manage from './fa.manage'
 import admin from './fa.admin'
+import comms from './fa.comms'
 
 export default {
     ...manage,
     ...admin,
+    ...comms,
     nav: {
         dashboard: 'داشبورد',
         customers: 'مشتریان',
@@ -62,6 +64,7 @@ export default {
         expiring: 'پایان در ۳۰ روز',
         blocked: 'بلاک یا ختم‌شده',
         unpaid: 'فاکتورهای پرداخت‌نشده',
+        messages_failed: 'پیام‌های ناموفق',
         receivable: 'طلب ما',
         expiring_list: 'اشتراک‌های نزدیک به پایان',
         no_expiring: 'در ۳۰ روز آینده موردی نیست.',

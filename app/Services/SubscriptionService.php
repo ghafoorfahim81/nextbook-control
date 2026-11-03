@@ -9,6 +9,7 @@ use App\Models\Package;
 use App\Models\Payment;
 use App\Models\Subscription;
 use App\Models\SubscriptionChange;
+use App\Services\Messaging\Notifier;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -97,7 +98,7 @@ class SubscriptionService
 
     public function block(Subscription $subscription, ?string $reason = null): Subscription
     {
-        return DB::transaction(function () use ($subscription, $reason) {
+        $blocked = DB::transaction(function () use ($subscription, $reason) {
             $subscription->forceFill([
                 'blocked_at' => now(),
                 'block_reason' => $reason,
@@ -109,11 +110,15 @@ class SubscriptionService
 
             return $subscription->refresh();
         });
+
+        $this->announce('blocked', $blocked->customer, ['reason' => $reason ?: '-'], 'blocked-'.$blocked->blocked_at->timestamp);
+
+        return $blocked;
     }
 
     public function unblock(Subscription $subscription): Subscription
     {
-        return DB::transaction(function () use ($subscription) {
+        $open = DB::transaction(function () use ($subscription) {
             $subscription->forceFill([
                 'blocked_at' => null,
                 'block_reason' => null,
@@ -125,6 +130,10 @@ class SubscriptionService
 
             return $subscription->refresh();
         });
+
+        $this->announce('unblocked', $open->customer, [], 'unblocked-'.now()->timestamp);
+
+        return $open;
     }
 
     /**
@@ -253,7 +262,7 @@ class SubscriptionService
     /** @param  array<string, mixed>  $data  amount, paid_on, method, and optionally reference, note */
     public function recordPayment(Invoice $invoice, array $data): Payment
     {
-        return DB::transaction(function () use ($invoice, $data) {
+        $payment = DB::transaction(function () use ($invoice, $data) {
             // Lock the invoice so two payments recorded together cannot
             // together go past what is owed.
             $invoice = Invoice::query()->with('payments')->lockForUpdate()->findOrFail($invoice->id);
@@ -286,6 +295,13 @@ class SubscriptionService
 
             return $payment;
         });
+
+        $this->announce('payment_received', $invoice->customer, [
+            'amount' => rtrim(rtrim(number_format((float) $payment->amount, 2, '.', ''), '0'), '.').' '.$invoice->currency,
+            'number' => $invoice->number,
+        ], 'payment-'.$payment->id);
+
+        return $payment;
     }
 
     /** Removes a payment recorded by mistake. The invoice is the record; the audit trail keeps what was removed. */
@@ -296,6 +312,24 @@ class SubscriptionService
             $payment->delete();
             Audit::record('payment.removed', $payment, $before, null, $payment->customer_id);
         });
+    }
+
+    /**
+     * Tells the customer's contacts about something that has just happened.
+     * Outside the transaction, and never allowed to fail the action itself: a
+     * mail server that is down must not stop a payment being recorded.
+     */
+    private function announce(string $kind, Customer $customer, array $data, string $cycle): void
+    {
+        if (! in_array($kind, (array) config('control.messaging.events'), true)) {
+            return;
+        }
+
+        try {
+            app(Notifier::class)->notify($kind, $customer, $data, $cycle);
+        } catch (\Throwable $e) {
+            report($e);
+        }
     }
 
     // --- Internals ----------------------------------------------------------
