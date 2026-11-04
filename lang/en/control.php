@@ -11,6 +11,8 @@ return [
     'overpayment' => 'The payment is more than what is left to pay (:balance).',
     'no_subscription' => 'This customer has no subscription, so there is no licence to issue.',
     'saved' => 'Saved.',
+    'provisioned' => 'The company was created in NextBook. Tell the administrator to open the sign-in page there and choose "Forgot password" to set a password.',
+    'provisioned_again' => 'This customer already had its company in NextBook; it is connected again.',
     'contact' => ['bad_number' => 'The :field number is not a valid phone number.'],
     'reminder' => [
         'too_soon' => 'A reminder was just sent to this customer. Try again in :minutes minutes.',

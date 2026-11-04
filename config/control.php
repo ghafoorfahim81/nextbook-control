@@ -11,6 +11,18 @@ return [
         'public_key' => env('LICENSE_PUBLIC_KEY'),
     ],
 
+    /*
+    | The NextBook that companies are created in (one for all customers). A
+    | customer whose NextBook runs elsewhere has its own address on its page,
+    | which is used instead. In production it must be https://: the request
+    | carries the customer's access token. It is signed with the licence key, so
+    | the ERP needs CONTROL_PROVISIONING=true to accept it.
+    */
+    'erp' => [
+        'url' => env('ERP_URL'),
+        'timeout' => (int) env('ERP_TIMEOUT', 30),
+    ],
+
     // How long an ERP keeps working on its last licence if it cannot reach this
     // system. Sent to the ERP so the two sides agree.
     'grace_days' => (int) env('LICENSE_GRACE_DAYS', 7),

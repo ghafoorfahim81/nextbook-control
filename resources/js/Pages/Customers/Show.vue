@@ -22,6 +22,7 @@ const props = defineProps({
     changes: { type: Array, default: () => [] },
     usage: { type: Object, default: null },
     issuedToken: { type: String, default: null },
+    provision: { type: Object, default: null },
 })
 
 const { can } = useAuth()
@@ -68,7 +69,7 @@ const rows = [
                 :usage="usage"
             />
 
-            <InstancePanel :customer-id="customer.id" :instance="instance" :issued-token="issuedToken" />
+            <InstancePanel :customer-id="customer.id" :instance="instance" :issued-token="issuedToken" :provision="provision" />
 
             <ContactsPanel :customer-id="customer.id" :contacts="contacts" />
 

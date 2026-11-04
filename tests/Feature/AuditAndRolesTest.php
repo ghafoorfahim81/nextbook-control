@@ -96,6 +96,12 @@ class AuditAndRolesTest extends TestCase
             $this->assertFalse($can($role, 'subscriptions.renew_free'), "{$role} must not extend for free");
         }
 
+        // Making a customer's company, and its administrator, in NextBook is the owner's alone.
+        $this->assertTrue($can('owner', 'customers.provision'));
+        foreach (['sales', 'finance', 'support', 'viewer'] as $role) {
+            $this->assertFalse($can($role, 'customers.provision'), "{$role} must not create companies");
+        }
+
         // Only the owner runs staff and reads the audit trail.
         $this->assertTrue($can('owner', 'staff.manage'));
         $this->assertTrue($can('owner', 'audit.view'));

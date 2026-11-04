@@ -129,6 +129,16 @@ class CustomerController extends Controller
             'instance' => $customer->instance
                 ? $customer->instance->only(['erp_company_id', 'base_url', 'erp_version', 'last_license_pull_at', 'last_usage_at']) + ['has_token' => $customer->instance->api_token_hash !== null]
                 : null,
+            // Only the owner is offered the creation of the company, and only
+            // while there is none; what is missing and where it would go are shown first.
+            'provision' => Gate::allows('customers.provision') && ! $customer->instance?->erp_company_id
+                ? [
+                    'missing' => app(\App\Services\ErpProvisioner::class)->missing($customer),
+                    'target' => app(\App\Services\ErpProvisioner::class)->target($customer),
+                    'admin_name' => $customer->contacts->sortByDesc('is_primary')->first()?->name,
+                    'admin_email' => $customer->contacts->sortByDesc('is_primary')->first()?->email,
+                ]
+                : null,
             'contacts' => $customer->contacts->sortByDesc('is_primary')->values()->map(fn ($contact) => $contact->only([
                 'id', 'name', 'role', 'phone', 'email', 'whatsapp', 'is_primary', 'wants_email', 'wants_whatsapp',
             ]) + [

@@ -16,6 +16,7 @@ use App\Http\Controllers\CustomerSubscriptionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InstanceController;
 use App\Http\Controllers\PackageController;
+use App\Http\Controllers\ProvisionController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/dashboard');
@@ -68,6 +69,7 @@ Route::middleware('auth')->group(function () {
 
             Route::put('instance', [InstanceController::class, 'update'])->name('instance.update');
             Route::post('instance/token', [InstanceController::class, 'issueToken'])->name('instance.token');
+            Route::post('provision', [ProvisionController::class, 'store'])->middleware('throttle:3,1')->name('instance.provision');
 
             Route::post('invoices', [BillingController::class, 'storeInvoice'])->name('invoices.store');
             Route::post('contacts', [ContactController::class, 'store'])->name('contacts.store');

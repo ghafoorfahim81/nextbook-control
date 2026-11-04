@@ -18,6 +18,8 @@ class Roles
         'subscriptions.view', 'subscriptions.assign', 'subscriptions.block',
         // Extending a subscription with no invoice behind it: a free month. Only the owner.
         'subscriptions.renew_free',
+        // Creating a customer's company, and its first administrator, in NextBook. Only the owner.
+        'customers.provision',
         'billing.view', 'billing.manage',
         'support.impersonate',
         'reports.view', 'audit.view',

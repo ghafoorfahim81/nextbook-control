@@ -9,7 +9,17 @@ const props = defineProps({
     customerId: String,
     instance: { type: Object, default: null },
     issuedToken: { type: String, default: null },
+    provision: { type: Object, default: null },
 })
+
+const make = useForm({
+    admin_name: props.provision?.admin_name ?? '',
+    admin_email: props.provision?.admin_email ?? '',
+})
+const createCompany = () => {
+    if (!window.confirm(t('instance.provision_confirm', { url: props.provision.target }))) return
+    make.post(`/customers/${props.customerId}/provision`, { preserveScroll: true })
+}
 
 const { can } = useAuth()
 const copied = ref(false)
@@ -47,6 +57,22 @@ const when = (value) => (value ? fdt(value) : t('instance.never'))
             <p class="mb-1 font-medium text-amber-900">{{ t('instance.issued') }}</p>
             <code dir="ltr" class="block select-all break-all rounded bg-white px-2 py-1">{{ issuedToken }}</code>
             <button type="button" class="mt-2 text-xs text-violet-700 hover:underline" @click="copy">{{ copied ? '✓' : 'Copy' }}</button>
+        </div>
+
+        <div v-if="provision" class="mb-4 rounded-md border border-violet-200 bg-violet-50 p-3 text-sm">
+            <p class="mb-1 font-medium">{{ t('instance.provision_title') }}</p>
+            <p class="mb-2 text-xs text-slate-600">{{ t('instance.provision_hint') }}</p>
+            <p v-if="provision.missing.length" class="text-red-700">
+                {{ t('instance.provision_missing') }}: {{ provision.missing.map((f) => t(`customers.${f}`)).join('، ') }}
+            </p>
+            <p v-else-if="!provision.target" class="text-red-700">{{ t('instance.provision_no_url') }}</p>
+            <form v-else class="space-y-2" @submit.prevent="createCompany">
+                <p class="text-xs">{{ t('instance.provision_target') }}: <code dir="ltr">{{ provision.target }}</code></p>
+                <input v-model="make.admin_name" :class="input" :placeholder="t('instance.admin_name')" />
+                <input v-model="make.admin_email" type="email" dir="ltr" :class="input" :placeholder="t('instance.admin_email')" />
+                <p v-for="(message, key) in make.errors" :key="key" class="text-red-600">{{ message }}</p>
+                <button type="submit" :disabled="make.processing" class="rounded-md bg-violet-700 px-3 py-1.5 text-sm text-white hover:bg-violet-800">{{ t('instance.provision') }}</button>
+            </form>
         </div>
 
         <form v-if="can('customers.manage')" class="space-y-3" @submit.prevent="save">
